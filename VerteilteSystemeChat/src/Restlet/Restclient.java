@@ -6,9 +6,19 @@ import org.restlet.resource.ClientResource;
 
 public class Restclient {
 	public static void main(String[] args) {
-		World world = new World("Der Client ist toll");
 
-		Representation rep = new JacksonRepresentation<World>(world);
-		new ClientResource("http://127.0.0.1:8081/rest/hello/10").put(rep);
+        Restclient.sendMessage();
+        Restclient.recieveMessage();
+
 	}
+    private static void sendMessage(){
+        Message message = new Message("Der Client ist toll");
+
+        Representation rep = new JacksonRepresentation<Message>(message);
+        new ClientResource("http://127.0.0.1:8081/rest/hello/10").put(rep);
+    }
+
+    private static void recieveMessage(){
+
+    }
 }

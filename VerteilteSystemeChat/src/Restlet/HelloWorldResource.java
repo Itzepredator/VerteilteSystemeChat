@@ -11,8 +11,8 @@ import org.restlet.resource.ServerResource;
 public class HelloWorldResource extends ServerResource {
 	@Get
 	public Representation helloWorld() {
-		World world = new World("halloJSON Welt");
-		return new JacksonRepresentation<World>(world);
+		Message message = new Message("halloJSON Welt");
+		return new JacksonRepresentation<Message>(message);
 	}
 
 	@Put
@@ -21,9 +21,9 @@ public class HelloWorldResource extends ServerResource {
 			System.out.println("id is " + getRequestAttributes().get("id"));
 		}
 
-		JacksonRepresentation<World> wr = new JacksonRepresentation<World>(rep,
-				World.class);
-		World w = wr.getObject();
+		JacksonRepresentation<Message> wr = new JacksonRepresentation<Message>(rep,
+				Message.class);
+		Message w = wr.getObject();
 		System.out.println("world has message " + w.message);
 	}
 }

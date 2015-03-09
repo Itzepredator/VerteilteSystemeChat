@@ -15,4 +15,8 @@ public class HelloWorldApplication extends Application {
 		
 		return router;
 	}
+    private void recieveMessageServer(){}
+    private void recieveMessageClient(){}
+    private void sendMessageServer(){}
+    private void sendMessageClient(){}
 }
