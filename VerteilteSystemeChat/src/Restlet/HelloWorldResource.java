@@ -20,9 +20,8 @@ public class HelloWorldResource extends ServerResource {
 		if (getRequestAttributes().containsKey("id")) {
 			System.out.println("id is " + getRequestAttributes().get("id"));
 		}
-
-		JacksonRepresentation<Message> wr = new JacksonRepresentation<Message>(rep,
-				Message.class);
+		JacksonRepresentation<Message> wr = new JacksonRepresentation<Message>(
+				rep, Message.class);
 		Message w = wr.getObject();
 		System.out.println("world has message " + w.message);
 	}
