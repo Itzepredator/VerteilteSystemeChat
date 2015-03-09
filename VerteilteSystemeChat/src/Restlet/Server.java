@@ -3,11 +3,9 @@ package Restlet;
 import java.awt.List;
 import java.io.IOException;
 
-import org.json.JSONObject;
 import org.restlet.Component;
 import org.restlet.data.Protocol;
-import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.representation.Representation;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
@@ -43,13 +41,8 @@ public class Server extends ServerResource {
 	}
 
 	@Put
-	public void messageFromClient(Representation rep) throws IOException {
-		if (getRequestAttributes().containsKey("id")) {
-			System.out.println("id is " + getRequestAttributes().get("id"));
-		}
-		JacksonRepresentation wr = new JacksonRepresentation(rep);
-		JSONObject w = new JSONObject(wr.getObject());
-		System.out.println("world has message " + w);
+	public void messageFromClient(StringRepresentation rep) throws IOException {
+		System.out.println("world has message " + rep);
 	}
 
 }

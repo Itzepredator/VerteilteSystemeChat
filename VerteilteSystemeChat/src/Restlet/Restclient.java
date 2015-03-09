@@ -1,8 +1,6 @@
 package Restlet;
 
-import org.json.JSONObject;
-import org.restlet.ext.jackson.JacksonRepresentation;
-import org.restlet.representation.Representation;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.ClientResource;
 
 public class Restclient {
@@ -14,8 +12,7 @@ public class Restclient {
 	private static void sendMessage() {
 
 		Message message = new Message("Der Client ist toll");
-		JSONObject jb = new JSONObject(message);
-		Representation rep = new JacksonRepresentation(jb);
+		StringRepresentation rep = new StringRepresentation(message.message);
 		new ClientResource("http://localhost:8081/restlet/test").put(rep);
 	}
 
