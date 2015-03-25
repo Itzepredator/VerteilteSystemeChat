@@ -15,3 +15,19 @@ Skript: http://dhbw.sperber.info/verteilte-systeme-1.php
 
 
 
+RAHMENBEDINGUNGEN:
+Chatsystem:
+Online/Offline
+Verfügbarkeit
+Datenschutz
+Datenintegrität
+Präsentation
+
+Persistierung der Nachrichten (sehen was passierte während Abwesenheit)
+Geräte unabhängig(auch gleichzeitig)
+keinen bzw. Slim Client(keine Oberfläche, mit Integrationstest gegen Server <-- getHistory etc.)
+Sicherstellung das wenn eine Komponente ausfällt der rest weiterläuft(Verschiedene Server die verschiedenes tun, irrelevant wo ich mich anmelde)
+Persistierung der Nachrichten auf allen knoten der Servern(synchronisierung so schnell wie möglich)
+Clients pullen, Server pushen
+Ein chatroom alle schreiben an alle
+Login(Benutzername, PW)
