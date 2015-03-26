@@ -1,78 +1,81 @@
 package projekt;
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.util.Scanner;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
-/**
- * 
- * @author Andreas Der Client verbindet sich automatisch mit dem Server und
- *         bleibt solange aktiv, bis das Wort BEENDEN eingegeben wurde
- *         (unabh‰ngig ob groﬂ oder klein) !!!!
- */
-public class Client {
-	public static Scanner scan = new Scanner(System.in);
-	public static String benutzername = "";
-	public static String passwort = "";
-	public static int port = 0;
-	public static boolean clientstop = true;
+public class Client implements Runnable {
+	private Socket socket = null;
+	private Thread thread = null;
+	private DataInputStream console = null;
+	private DataOutputStream streamOut = null;
+	private ClientThread client = null;
 
-	public static void main(String[] args) {
-		Client client = new Client();
-
-		System.out.println("Bitte geben Sie Ihren Benutzernamen ein:");
-		benutzername = scan.nextLine();
-		System.out.println("Bitte geben Sie Ihr Passwort ein:");
-		passwort = scan.nextLine();
-		System.out.println("Bitte geben Sie den Serverport ein:");
-		port = Integer.valueOf(scan.nextLine());
+	public Client(String serverName, int serverPort) {
+		System.out.println("Establishing connection. Please wait ...");
 		try {
-			while (clientstop) {
-				client.sendeNachrichtAnServer();
+			socket = new Socket(serverName, serverPort);
+			System.out.println("Connected: " + socket);
+			start();
+		} catch (UnknownHostException uhe) {
+			System.out.println("Host unknown: " + uhe.getMessage());
+		} catch (IOException ioe) {
+			System.out.println("Unexpected exception: " + ioe.getMessage());
+		}
+	}
+
+	public void run() {
+		while (thread != null) {
+			try {
+				streamOut.writeUTF(console.readLine());
+				streamOut.flush();
+			} catch (IOException ioe) {
+				System.out.println("Sending error: " + ioe.getMessage());
+				stop();
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
-	void sendeNachrichtAnServer() throws IOException {
-		String ip = "127.0.0.1"; // localhost
-		java.net.Socket socket = new java.net.Socket(ip, port); // verbindet
-																// sich mit
-																// Server
+	public void handle(String msg) {
+		if (msg.equals(".bye")) {
+			System.out.println("Good bye. Press RETURN to exit ...");
+			stop();
+		} else
+			System.out.println(msg);
+	}
 
-		System.out.println("Bitte Nachricht eingeben:");
-
-		String zuSendendeNachricht = scan.nextLine();
-		if (zuSendendeNachricht.equalsIgnoreCase("beenden")) {
-			clientstop = false;
+	public void start() throws IOException {
+		console = new DataInputStream(System.in);
+		streamOut = new DataOutputStream(socket.getOutputStream());
+		if (thread == null) {
+			client = new ClientThread(this, socket);
+			thread = new Thread(this);
+			thread.start();
 		}
-		schreibeNachricht(socket, benutzername + ";" + passwort + ";"
-				+ zuSendendeNachricht);
-		// String empfangeneNachricht = leseNachricht(socket);
-		// System.out.println(empfangeneNachricht);
 	}
 
-	void schreibeNachricht(java.net.Socket socket, String nachricht)
-			throws IOException {
-		PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(
-				socket.getOutputStream()));
-		printWriter.print(nachricht);
-		printWriter.flush();
+	public void stop() {
+		if (thread != null) {
+			thread.stop();
+			thread = null;
+		}
+		try {
+			if (console != null)
+				console.close();
+			if (streamOut != null)
+				streamOut.close();
+			if (socket != null)
+				socket.close();
+		} catch (IOException ioe) {
+			System.out.println("Error closing ...");
+		}
+		client.close();
+		client.stop();
 	}
 
-	String leseNachricht(java.net.Socket socket) throws IOException {
-		BufferedReader bufferedReader = new BufferedReader(
-				new InputStreamReader(socket.getInputStream()));
-		char[] buffer = new char[200];
-		int anzahlZeichen = bufferedReader.read(buffer, 0, 200); // blockiert
-																	// bis
-																	// Nachricht
-																	// empfangen
-		String nachricht = new String(buffer, 0, anzahlZeichen);
-		return nachricht;
+	public static void main(String args[]) {
+		Client client = new Client("127.0.0.1", 8081);
 	}
 }

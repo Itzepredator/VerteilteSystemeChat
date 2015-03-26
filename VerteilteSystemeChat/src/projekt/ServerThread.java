@@ -1,92 +1,67 @@
 package projekt;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.sql.SQLException;
+import java.net.Socket;
 
-public class ServerThread implements Runnable {
+public class ServerThread extends Thread {
+	private Server server = null;
+	private Socket socket = null;
+	private int ID = -1;
+	private DataInputStream streamIn = null;
+	private DataOutputStream streamOut = null;
 
-	public int port;
-	public DBController dbc;
-
-	public ServerThread() {
+	public ServerThread(Server _server, Socket _socket) {
+		super();
+		server = _server;
+		socket = _socket;
+		ID = socket.getPort();
 	}
 
-	public ServerThread(int port, DBController dbc) {
-		this.port = port;
-		this.dbc = dbc;
-		// run();
-	}
-
-	@Override
-	public void run() {
+	public void send(String msg) {
 		try {
-			oeffneServerPortFuerClient(port);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			streamOut.writeUTF(msg);
+			streamOut.flush();
+		} catch (IOException ioe) {
+			System.out.println(ID + " ERROR sending: " + ioe.getMessage());
+			server.remove(ID);
+			stop();
 		}
 	}
 
-	private void oeffneServerPortFuerClient(int port) throws IOException,
-			SQLException {
-		java.net.ServerSocket serverSocket = new java.net.ServerSocket(port);
+	public int getID() {
+		return ID;
+	}
 
-		// Damit der Server weiss auf welchen Sockets er Clients besitzt
-		Server.addClients(serverSocket);
-
+	public void run() {
+		System.out.println("Server Thread " + ID + " running.");
 		while (true) {
-			java.net.Socket client = warteAufAnmeldungClient(serverSocket);
-
-			String nachricht = leseNachricht(client);
-
-			System.out.println(nachricht);
-
+			try {
+				server.handle(ID, streamIn.readUTF());
+			} catch (IOException ioe) {
+				System.out.println(ID + " ERROR reading: " + ioe.getMessage());
+				server.remove(ID);
+				stop();
+			}
 		}
 	}
 
-	java.net.Socket warteAufAnmeldungClient(java.net.ServerSocket serverSocket)
-			throws IOException {
-		System.out.println("Warte auf Client Port:" + port);
-		// blockiert, bis sich ein Client angemeldet hat
-		java.net.Socket socket = serverSocket.accept();
-		return socket;
-	}
-
-	String leseNachricht(java.net.Socket socket) throws IOException,
-			SQLException {
-		BufferedReader bufferedReader = new BufferedReader(
-				new InputStreamReader(socket.getInputStream()));
-		char[] buffer = new char[200];
-		int anzahlZeichen = bufferedReader.read(buffer, 0, 200);
-		String nachricht = new String(buffer, 0, anzahlZeichen);
-		nachricht = extrahiereBenutzernameUndPasswortVonNachricht(nachricht);
-
-		return nachricht;
-	}
-
-	void schreibeNachricht(java.net.Socket socket, String nachricht)
-			throws IOException {
-		PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(
+	public void open() throws IOException {
+		streamIn = new DataInputStream(new BufferedInputStream(
+				socket.getInputStream()));
+		streamOut = new DataOutputStream(new BufferedOutputStream(
 				socket.getOutputStream()));
-		printWriter.print(nachricht);
-		printWriter.flush();
 	}
 
-	private String extrahiereBenutzernameUndPasswortVonNachricht(
-			String nachricht) throws SQLException {
-		String benutzername = nachricht.substring(0, nachricht.indexOf(";"));
-		nachricht = nachricht.substring(benutzername.length() + 1);
-		String passwort = nachricht.substring(0, nachricht.indexOf(";"));
-		nachricht = nachricht.substring(passwort.length() + 1);
-		dbc.speicherNachrichtInDatenbank(benutzername, passwort, nachricht);
-		return benutzername + ": " + nachricht;
+	public void close() throws IOException {
+		if (socket != null)
+			socket.close();
+		if (streamIn != null)
+			streamIn.close();
+		if (streamOut != null)
+			streamOut.close();
 	}
-
 }

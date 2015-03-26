@@ -2,78 +2,105 @@ package projekt;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.net.Socket;
 
-/**
- * 
- * @author Andreas
- * 
- *         Der Server stellt eine Verbindung her auf dem Port 8081 Auf diesen
- *         kann sich der Client verbinden Die Datenbank wird bei jedem start des
- *         Servers initial gelöscht und mit Testdaten befüllt Sind bereits Daten
- *         in der DB vorhanden, so werden diese Verwendet
- * 
- *         TODO Es fehlt noch eine saubere Übergabe der Daten an den Client,
- *         dieser sieht bisher nur seine Eingaben
- * 
- *         TODO Server 2 Server kommunikation
- * 
- *         TODO Login für Clients ausprogrammieren
- * 
- *         TODO Broadcastfunktion
- */
-public class Server {
+public class Server implements Runnable {
+	private ServerThread clients[] = new ServerThread[50];
+	private ServerSocket server = null;
+	private Thread thread = null;
+	private int clientCount = 0;
 
-	public static DBController dbc = DBController.getInstance();
-	public static ArrayList<ServerSocket> clients = new ArrayList<>();
-
-	public static void main(String[] args) throws SQLException {
-
-		ArrayList<String> history = legeDatenbankAnHoleDatenAusDatenbank();
-
-		// TODO Nur für Testzwecke ausgabe des Datenbank Inhaltes
-		for (String string : history) {
-			System.out.println(string);
-		}
-
-		Server server = new Server();
+	public Server(int port) {
 		try {
-			server.start();
-		} catch (IOException e) {
-			e.printStackTrace();
+			System.out
+					.println("Binding to port " + port + ", please wait  ...");
+			server = new ServerSocket(port);
+			System.out.println("Server started: " + server);
+			start();
+		} catch (IOException ioe) {
+			System.out.println("Can not bind to port " + port + ": "
+					+ ioe.getMessage());
 		}
-
 	}
 
-	void start() throws IOException, SQLException {
-		new Thread(new ServerThread(8081, dbc)).start();
-		new Thread(new ServerThread(8082, dbc)).start();
-
-		// schreibeNachricht(client, nachricht);
+	public void run() {
+		while (thread != null) {
+			try {
+				System.out.println("Waiting for a client ...");
+				addThread(server.accept());
+			} catch (IOException ioe) {
+				System.out.println("Server accept error: " + ioe);
+				stop();
+			}
+		}
 	}
 
-	private static ArrayList<String> legeDatenbankAnHoleDatenAusDatenbank()
-			throws SQLException {
-
-		dbc.initDBConnection();
-
-		// TODO nur zu Testzwecken werte Anlegen
-		// dbc.löscheHistory();
-		dbc.legeTestDatenAn();
-
-		return getChatHistoryAusEigenerDatenbank(dbc);
+	public void start() {
+		if (thread == null) {
+			thread = new Thread(this);
+			thread.start();
+		}
 	}
 
-	private static ArrayList<String> getChatHistoryAusEigenerDatenbank(
-			DBController dbc) throws SQLException {
-		ArrayList<String> a = new ArrayList<>();
-
-		return dbc.getHistory();
+	public void stop() {
+		if (thread != null) {
+			thread.stop();
+			thread = null;
+		}
 	}
 
-	public static void addClients(ServerSocket client) {
-		Server.clients.add(client);
+	private int findClient(int ID) {
+		for (int i = 0; i < clientCount; i++)
+			if (clients[i].getID() == ID)
+				return i;
+		return -1;
 	}
 
+	public synchronized void handle(int ID, String input) {
+		if (input.equals(".bye")) {
+			clients[findClient(ID)].send(".bye");
+			remove(ID);
+		} else
+			for (int i = 0; i < clientCount; i++)
+				clients[i].send(ID + ": " + input);
+	}
+
+	public synchronized void remove(int ID) {
+		int pos = findClient(ID);
+		if (pos >= 0) {
+			ServerThread toTerminate = clients[pos];
+			System.out.println("Removing client thread " + ID + " at " + pos);
+			if (pos < clientCount - 1)
+				for (int i = pos + 1; i < clientCount; i++)
+					clients[i - 1] = clients[i];
+			clientCount--;
+			try {
+				toTerminate.close();
+			} catch (IOException ioe) {
+				System.out.println("Error closing thread: " + ioe);
+			}
+			toTerminate.stop();
+		}
+	}
+
+	private void addThread(Socket socket) {
+		if (clientCount < clients.length) {
+			System.out.println("Client accepted: " + socket);
+			clients[clientCount] = new ServerThread(this, socket);
+			try {
+				clients[clientCount].open();
+				clients[clientCount].start();
+				clientCount++;
+			} catch (IOException ioe) {
+				System.out.println("Error opening thread: " + ioe);
+			}
+		} else
+			System.out.println("Client refused: maximum " + clients.length
+					+ " reached.");
+	}
+
+	public static void main(String args[]) {
+
+		Server server = new Server(8081);
+	}
 }
