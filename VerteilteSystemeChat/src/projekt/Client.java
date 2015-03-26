@@ -5,16 +5,28 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Scanner;
 
 public class Client implements Runnable {
+	public static Scanner scan = new Scanner(System.in);
+
 	private Socket socket = null;
 	private Thread thread = null;
 	private DataInputStream console = null;
 	private DataOutputStream streamOut = null;
 	private ClientThread client = null;
+	String eMail = "";
+	String benutzerName = "";
+	String passwort = "";
 
-	public Client(String serverName, int serverPort) {
+	public Client(String serverName, int serverPort) throws IOException {
 		System.out.println("Establishing connection. Please wait ...");
+		System.out.println("Bitte geben Sie Ihre EMail ein: ");
+		eMail = scan.nextLine();
+		System.out.println("Bitte geben Sie Ihren Benutzernamen ein: ");
+		benutzerName = scan.nextLine();
+		System.out.println("Bitte geben Sie Ihr Passwort ein: ");
+		passwort = scan.nextLine();
 		try {
 			socket = new Socket(serverName, serverPort);
 			System.out.println("Connected: " + socket);
@@ -29,7 +41,9 @@ public class Client implements Runnable {
 	public void run() {
 		while (thread != null) {
 			try {
-				streamOut.writeUTF(console.readLine());
+
+				streamOut.writeUTF(eMail + ";" + benutzerName + ";" + passwort
+						+ ";" + scan.nextLine());
 				streamOut.flush();
 			} catch (IOException ioe) {
 				System.out.println("Sending error: " + ioe.getMessage());
@@ -75,7 +89,7 @@ public class Client implements Runnable {
 		client.stop();
 	}
 
-	public static void main(String args[]) {
+	public static void main(String args[]) throws IOException {
 		Client client = new Client("127.0.0.1", 8081);
 	}
 }

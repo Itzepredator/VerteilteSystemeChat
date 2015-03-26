@@ -18,7 +18,9 @@ public class Server implements Runnable {
 
 	public Server(int port) throws SQLException {
 		try {
+			// anlegen der Datenbank und
 			dbc.initDBConnection();
+			// dbc.löscheHistory();
 			history = legeDatenbankAnHoleDatenAusDatenbank();
 
 			System.out
@@ -32,6 +34,7 @@ public class Server implements Runnable {
 		}
 	}
 
+	// legt falls keine Daten in der Datenbank vorhanden Testdaten an
 	private static ArrayList<String> legeDatenbankAnHoleDatenAusDatenbank()
 			throws SQLException {
 		dbc.legeTestDatenAn();
@@ -72,20 +75,39 @@ public class Server implements Runnable {
 	}
 
 	public synchronized void handle(int ID, String input) throws SQLException {
-		if (input.equals(".bye")) {
+		if (input.equalsIgnoreCase("beenden")) {
 			clients[findClient(ID)].send(".bye");
 			remove(ID);
 		} else {
+			// System.out.println(input);
+			String eMail = extrahiereBenutzerdaten(input);
+			input = input.substring(eMail.length() + 1);
+			String benutzerName = extrahiereBenutzerdaten(input);
+			input = input.substring(benutzerName.length() + 1);
+			String passwort = extrahiereBenutzerdaten(input);
+			input = input.substring(passwort.length() + 1);
+
 			int i = 0;
 			for (i = 0; i < clientCount; i++) {
 				if (historySend) {
+					// Schicken der History mit der ersten Nachricht des Clients
 					clients[i].send(history);
 					historySend = false;
 				}
-				clients[i].send(ID + ": " + input);
+
+				clients[i].send(benutzerName + ": " + input);
+
+				dbc.speicherNachrichtInDatenbank(eMail, benutzerName, passwort,
+						ID, input);
 			}
 		}
 
+	}
+
+	private String extrahiereBenutzerdaten(String input) {
+		String s = "";
+		s = input.substring(0, input.indexOf(";"));
+		return s;
 	}
 
 	public synchronized void remove(int ID) {

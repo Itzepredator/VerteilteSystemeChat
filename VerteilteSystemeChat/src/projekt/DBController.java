@@ -70,10 +70,10 @@ class DBController {
 		Statement stmt = connection.createStatement();
 		// stmt.executeUpdate("DROP TABLE IF EXISTS history;");
 		try {
-			stmt.executeUpdate("CREATE TABLE history (benutzername, passwort, message);");
-			stmt.execute("INSERT INTO history (benutzername, passwort, message) VALUES ('Andreas', '1234', 'Ich liebe Verteilte Systeme')");
-			stmt.execute("INSERT INTO history (benutzername, passwort, message) VALUES ('Marvin', '1234', 'Ich mag Payday 2')");
-			stmt.execute("INSERT INTO history (benutzername, passwort, message) VALUES ('Fabian', '1234', 'Ich hasse CsGo Office')");
+			stmt.executeUpdate("CREATE TABLE history (email,benutzername, passwort,id, message);");
+			stmt.execute("INSERT INTO history (email,benutzername, passwort,id, message) VALUES ('Heinen-andreas@web.de','Andreas', '1234', '1234', 'Ich liebe Verteilte Systeme')");
+			stmt.execute("INSERT INTO history ( email,benutzername, passwort,id, message) VALUES ('marvin.obreiter@gmx.de','Marvin', '1234','1234', 'Ich mag Payday 2')");
+			stmt.execute("INSERT INTO history ( email,benutzername, passwort,id, message) VALUES ('fabian-kunzke@web.de','Fabian', '1234', '1234','Ich hasse CsGo Office')");
 
 		} catch (Exception e) {
 			System.out
@@ -83,11 +83,25 @@ class DBController {
 	}
 
 	// Speichern einer Nachricht des Clients in die DB
-	public void speicherNachrichtInDatenbank(String benutzername,
-			String passwort, String message) throws SQLException {
+	public void speicherNachrichtInDatenbank(String eMail, String benutzername,
+			String passwort, int ID, String message) throws SQLException {
 		Statement stmt = connection.createStatement();
-		stmt.execute("INSERT INTO history (benutzername, passwort, message) VALUES ('"
-				+ benutzername + "', '" + passwort + "', '" + message + "')");
+		System.out
+				.println("INSERT INTO history (email, benutzername, passwort,id, message) VALUES ('"
+						+ eMail
+						+ "','"
+						+ benutzername
+						+ "', '"
+						+ passwort
+						+ "', '" + ID + "', '" + message + "')");
+		stmt.execute("INSERT INTO history (email, benutzername, passwort,id, message) VALUES ('"
+				+ eMail
+				+ "','"
+				+ benutzername
+				+ "', '"
+				+ passwort
+				+ "', '"
+				+ ID + "', '" + message + "')");
 
 	}
 
