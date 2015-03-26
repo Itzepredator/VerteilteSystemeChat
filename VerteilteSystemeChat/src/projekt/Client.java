@@ -39,8 +39,8 @@ public class Client implements Runnable {
 	}
 
 	public void handle(String msg) {
-		if (msg.equals(".bye")) {
-			System.out.println("Good bye. Press RETURN to exit ...");
+		if (msg.equalsIgnoreCase("beenden")) {
+			System.out.println("Tschöö ...");
 			stop();
 		} else
 			System.out.println(msg);
