@@ -3,12 +3,14 @@ package projekt;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Server implements Runnable {
 	private ServerThread clients[] = new ServerThread[50];
 	private ServerSocket server = null;
+	private Socket server2serverSocket = null;
 	private Thread thread = null;
 	private int clientCount = 0;
 	private ArrayList<String> history = null;
@@ -23,15 +25,43 @@ public class Server implements Runnable {
 			// dbc.löscheHistory();
 			history = legeDatenbankAnHoleDatenAusDatenbank();
 
-			System.out
-					.println("Binding to port " + port + ", please wait  ...");
-			server = new ServerSocket(port);
-			System.out.println("Server started: " + server);
-			start();
+			serverStartenUndPortbinding(port);
+			// TODO Message von Server2Server programmieren
+			verbindungZuZweitemServerAufbauen(port);
+
 		} catch (IOException ioe) {
 			System.out.println("Can not bind to port " + port + ": "
 					+ ioe.getMessage());
 		}
+	}
+
+	private void verbindungZuZweitemServerAufbauen(int port) throws IOException {
+		if (port == 8081)
+			server2serverSocket = server2ServerConnector("127.0.0.1", 8080);
+
+		if (port == 8080)
+			server2serverSocket = server2ServerConnector("127.0.0.1", 8081);
+	}
+
+	private void serverStartenUndPortbinding(int port) throws IOException {
+		System.out.println("Binding to port " + port + ", please wait  ...");
+		server = new ServerSocket(port);
+		System.out.println("Server started: " + server);
+		start();
+	}
+
+	public Socket server2ServerConnector(String serverName, int serverPort)
+			throws IOException {
+		try {
+			server2serverSocket = new Socket(serverName, serverPort);
+			System.out.println("Connected: " + server2serverSocket);
+			start();
+		} catch (UnknownHostException uhe) {
+			System.out.println("Host unknown: " + uhe.getMessage());
+		} catch (IOException ioe) {
+			System.out.println("Unexpected exception: " + ioe.getMessage());
+		}
+		return server2serverSocket;
 	}
 
 	// legt falls keine Daten in der Datenbank vorhanden Testdaten an
