@@ -90,6 +90,7 @@ public class Client implements Runnable {
 	}
 
 	public static void main(String args[]) throws IOException {
+		// Client client = new Client("127.0.0.1", 8080);
 		Client client = new Client("127.0.0.1", 8081);
 	}
 }
